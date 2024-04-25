@@ -16,7 +16,7 @@ class ProcessData {
     std::string category;
 };
 std::vector<ProcessData> readProcessDataFromFile(const std::string& filename);
-void searchProcess(const std::vector<ProcessData>& processData, const std::string& process_name);
+ProcessData searchProcess(const std::vector<ProcessData>& processData, const std::string& process_name);
 
 class Process {
 public:
@@ -63,51 +63,74 @@ int main() {
 
     BOOL result = EnumProcesses(process_id, sizeof(process_id), &returned_bytes);
 
-    Application app[returned_bytes/sizeof(DWORD)];
+    DWORD real_size = returned_bytes/sizeof(DWORD);
+    std::vector<Application> app;
 
     if(result){
-        std::cout << "No. Of Processes: " << returned_bytes/sizeof(DWORD);
-        for(int i=0;i<returned_bytes/sizeof(DWORD);i++){
-            
+        std::cout << "No. Of Processes: " << real_size << std::endl;
+        for(int i=0;i<real_size;i++){
+
+            std::string process_name = get_process_name(process_id[i]);
+            ProcessData P = searchProcess(processData, process_name);
+            Application A;
+            A.new_app(process_id[i], process_name, P.category, P.app_name);
+            app.push_back(A);
         }
     }
 
+    for(int i=0;i<real_size;i++){
+        std::cout << "Process ID: " << app[i].get_process_id() << " ";
+        std::cout << "Process Name: " << app[i].get_process_name() << " ";
+
+        std::cout << "Category: " << app[i].get_category() << " ";
+        std::cout << "App Name: " << app[i].get_name() << " ";
+        std::cout << std::endl;
+    }
     return 0;
 }
 
-std::string get_process_name(DWORD process_id){
-    HANDLE h_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
+    std::string get_process_name(DWORD process_id){
+        HANDLE h_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
 
-    if(h_process == NULL){
-        
-    }
-}
-
-std::vector<ProcessData> readProcessDataFromFile(const std::string& filename) {
-    std::ifstream file(filename);
-    std::vector<ProcessData> processData;
-    if (file.is_open()) {
-        std::string line;
-        while (getline(file, line)) {
-            std::istringstream iss(line);
-            std::string process_name, app_name,category;
-            std::getline(iss, process_name, ':');
-            std::getline(iss, app_name, ',');
-            std::getline(iss, category, '\n');
-            std::cout << process_name << " " << app_name << " " << category << std::endl;
-            processData.push_back({process_name,app_name, category});
+        if(h_process == NULL){
+            return "Access Denied";
         }
-        file.close();
-    }
-    return processData;
-}
 
-void searchProcess(const std::vector<ProcessData>& processData, const std::string& process_name) {
-    for (const auto& process : processData) {
-        if (process.process_name == process_name) {
-            std::cout << process.process_name << ": " << process.app_name << ", " << process.category << std::endl;
-            return;
+        TCHAR process_name[1020];
+
+        if(GetModuleBaseName(h_process, NULL, process_name, 1020)){
+            CloseHandle(h_process);
+            return std::string(process_name);
+        }
+        else {
+            CloseHandle(h_process);
+            return "Unknown";
         }
     }
-    std::cout << "Process not found." << std::endl;
-}
+
+    std::vector<ProcessData> readProcessDataFromFile(const std::string& filename) {
+        std::ifstream file(filename);
+        std::vector<ProcessData> processData;
+        if (file.is_open()) {
+            std::string line;
+            while (getline(file, line)) {
+                std::istringstream iss(line);
+                std::string process_name, app_name,category;
+                std::getline(iss, process_name, ':');
+                std::getline(iss, app_name, ',');
+                std::getline(iss, category, '\n');
+                processData.push_back({process_name,app_name, category});
+            }
+            file.close();
+        }
+        return processData;
+    }
+
+    ProcessData searchProcess(const std::vector<ProcessData>& processData, const std::string& process_name) {
+        for (const auto& process : processData) {
+            if (process.process_name == process_name) {
+                return process;
+            }
+        }
+        return {"", "", ""};
+    }
