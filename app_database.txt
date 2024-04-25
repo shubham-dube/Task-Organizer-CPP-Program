@@ -1,0 +1,43 @@
+sihost.exe: System Idle Process, System Process 
+svchost.exe: Service Host (Generic), System Process 
+Explorer.EXE: Windows File Explorer, File Management 
+taskhostw.exe: Task Host Window, System Process 
+svchost.exe: Service Host (Generic), System Process 
+SearchHost.exe: Windows Search Host, Search 
+StartMenuExperienceHost.exe: Start Menu Experience Host, User Interface 
+Widgets.exe: Windows Widgets, User Interface 
+RuntimeBroker.exe: Runtime Broker, System Process 
+RuntimeBroker.exe: Runtime Broker, System Process 
+svchost.exe: Service Host (Generic), System Process 
+DllHost.exe: DLL Host, System Process 
+IDMan.exe: Internet Download Manager, Download Management 
+E_YATIN0E.EXE: (Unknown), (Unknown) 
+ShellExperienceHost.exe: Shell Experience Host, User Interface 
+svchost.exe: Service Host (Generic), System Process 
+SystemSettingsBroker.exe: System Settings Broker, System Process 
+msedgewebview2.exe: Microsoft Edge WebView2, Web Browser 
+LocationNotificationWindows.exe: Location Notification Windows Service, System Process 
+SmartByteTelemetry.exe: SmartByte Telemetry Service, Networking 
+DllHost.exe: DLL Host, System Process 
+Code.exe: Visual Studio Code, Development Tool 
+ApplicationFrameHost.exe: Application Frame Host, System Process 
+SystemSettings.exe: System Settings, System Process 
+UserOOBEBroker.exe: User-Out-of-Box Experience Broker, System Process 
+Code.exe: Visual Studio Code, Development Tool 
+conhost.exe: Console Window Host, System Process 
+powershell.exe: Windows PowerShell, Scripting Tool 
+cpptools.exe: Visual Studio C++ Tools, Development Tool 
+conhost.exe: Console Window Host, System Process 
+chrome.exe: Google Chrome, Web Browser 
+Spotify.exe: Spotify, Music Player 
+backgroundTaskHost.exe: Background Task Host, System Process 
+RuntimeBroker.exe: Runtime Broker, System Process 
+Spotify.exe: Spotify, Music Player 
+DllHost.exe: DLL Host, System Process 
+LockApp.exe: Lock Screen App, System Process 
+RuntimeBroker.exe: Runtime Broker, System Process 
+webwallpaper32.exe: (Unknown), (Unknown) 
+cpptools-srv.exe: Visual Studio C++ Server, Development Tool 
+conhost.exe: Console Window Host, System Process 
+chrome.exe: Google Chrome, Web Browser 
+powershell.exe: Windows PowerShell, Scripting Tool
