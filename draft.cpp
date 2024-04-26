@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#define MAX_LOADSTRING 100
 
 class ProcessInfo
 {
@@ -25,7 +26,8 @@ public:
     {
         std::vector<WindowEnumerator> processes;
 
-        EnumWindows([this, &processes](HWND hwnd, LPARAM lParam) { 
+        EnumWindows(HWND hwnd, LPARAM lParam) 
+        { 
             DWORD pid;
             GetWindowThreadProcessId(hwnd, &pid);
 
