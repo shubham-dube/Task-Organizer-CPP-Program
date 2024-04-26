@@ -8,69 +8,70 @@
 #include <fstream>
 #include <sstream>
 static int i = 0;
+using namespace std;
 
 class ProcessData {
     public:
-    std::string process_name;
-    std::string app_name;
-    std::string category;
+    string process_name;
+    string app_name;
+    string category;
 };
-std::vector<ProcessData> readProcessDataFromFile(const std::string& filename);
-ProcessData searchProcess(const std::vector<ProcessData>& processData, const std::string& process_name);
+vector<ProcessData> readProcessDataFromFile(const string& filename);
+ProcessData searchProcess(const vector<ProcessData>& processData, const string& process_name);
 
 class Process {
 public:
     Process(){}
-    void new_process(const DWORD &process_id, const std::string &process_name, const std::string& category){
+    void new_process(const DWORD &process_id, const string &process_name, const string& category){
         this->process_id = process_id;
         this->process_name = process_name;
         this->category = category;
     }
 
     const DWORD get_process_id() const { return process_id; }
-    const std::string get_process_name() const { return process_name; }
-    const std::string get_category() const { return category; }
+    const string get_process_name() const { return process_name; }
+    const string get_category() const { return category; }
 
 private:
     DWORD process_id;
-    std::string process_name;
-    std::string category;
+    string process_name;
+    string category;
 };
 
 class Application: public Process {
 public:
     Application(){}
-    void new_app(const DWORD &process_id, const std::string &process_name, 
-    const std::string& category, const std::string &name){
+    void new_app(const DWORD &process_id, const string &process_name, 
+    const string& category, const string &name){
         new_process(process_id, process_name, category);
         this->name = name;
-        std::cout << "Application Created -> " << ++i << std::endl;
+        cout << "Application Created -> " << ++i << endl;
     }
 
-    const std::string get_name() const { return name; }
+    const string get_name() const { return name; }
 
 private:
-    std::string name;
+    string name;
 };
 
-std::string get_process_name(DWORD process_id);
+string get_process_name(DWORD process_id);
+BOOL get_all_processes(vector<Application> &all_apps, DWORD &size);
 
 int main() {
-    std::vector<ProcessData> processData = readProcessDataFromFile("app_database.txt");
-    
+    vector<ProcessData> processData = readProcessDataFromFile("app_database.txt");
+    vector<DWORD> process_info;
     DWORD process_id[500];
     DWORD returned_bytes;
 
     BOOL result = EnumProcesses(process_id, sizeof(process_id), &returned_bytes);
 
     DWORD real_size = returned_bytes/sizeof(DWORD);
-    std::vector<Application> app;
+    vector<Application> app;
 
     if(result){
-        std::cout << "No. Of Processes: " << real_size << std::endl;
+        cout << "No. Of Processes: " << real_size << endl;
         for(int i=0;i<real_size;i++){
-
-            std::string process_name = get_process_name(process_id[i]);
+            string process_name = get_process_name(process_id[i]);
             ProcessData P = searchProcess(processData, process_name);
             Application A;
             A.new_app(process_id[i], process_name, P.category, P.app_name);
@@ -78,59 +79,69 @@ int main() {
         }
     }
 
-    for(int i=0;i<real_size;i++){
-        std::cout << "Process ID: " << app[i].get_process_id() << " ";
-        std::cout << "Process Name: " << app[i].get_process_name() << " ";
-
-        std::cout << "Category: " << app[i].get_category() << " ";
-        std::cout << "App Name: " << app[i].get_name() << " ";
-        std::cout << std::endl;
+    while(1) {
+        system("cls");
+        DWORD temp = 0;
+        BOOL resTemp = EnumProcesses(process_id, sizeof(process_id), &temp);
+        if(temp/sizeof(DWORD) != real_size){
+            for(int i=0;i<temp/sizeof(DWORD);i++){
+                cout << process_id[i] << " : " << app[i].get_process_name() << endl;
+            }
+            real_size = temp/sizeof(DWORD);
+        }
+        cout << "Size: "<<temp/sizeof(DWORD) << "  "<< sizeof(process_id) << endl;
+        Sleep(10000);
     }
+
     return 0;
 }
 
-    std::string get_process_name(DWORD process_id){
-        HANDLE h_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
+BOOL get_all_processes(vector<Application> &all_apps, DWORD &size){
+    
+}
 
-        if(h_process == NULL){
-            return "Access Denied";
-        }
+string get_process_name(DWORD process_id){
+    HANDLE h_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
 
-        TCHAR process_name[1020];
-
-        if(GetModuleBaseName(h_process, NULL, process_name, 1020)){
-            CloseHandle(h_process);
-            return std::string(process_name);
-        }
-        else {
-            CloseHandle(h_process);
-            return "Unknown";
-        }
+    if(h_process == NULL){
+        return "Access Denied";
     }
 
-    std::vector<ProcessData> readProcessDataFromFile(const std::string& filename) {
-        std::ifstream file(filename);
-        std::vector<ProcessData> processData;
-        if (file.is_open()) {
-            std::string line;
-            while (getline(file, line)) {
-                std::istringstream iss(line);
-                std::string process_name, app_name,category;
-                std::getline(iss, process_name, ':');
-                std::getline(iss, app_name, ',');
-                std::getline(iss, category, '\n');
-                processData.push_back({process_name,app_name, category});
-            }
-            file.close();
-        }
-        return processData;
-    }
+    TCHAR process_name[1020];
 
-    ProcessData searchProcess(const std::vector<ProcessData>& processData, const std::string& process_name) {
-        for (const auto& process : processData) {
-            if (process.process_name == process_name) {
-                return process;
-            }
-        }
-        return {"", "", ""};
+    if(GetModuleBaseName(h_process, NULL, process_name, 1020)){
+        CloseHandle(h_process);
+        return string(process_name);
     }
+    else {
+        CloseHandle(h_process);
+        return "Unknown";
+    }
+}
+
+vector<ProcessData> readProcessDataFromFile(const string& filename) {
+    ifstream file(filename);
+    vector<ProcessData> processData;
+    if (file.is_open()) {
+        string line;
+        while (getline(file, line)) {
+            istringstream iss(line);
+            string process_name, app_name,category;
+            getline(iss, process_name, ':');
+            getline(iss, app_name, ',');
+            getline(iss, category, '\n');
+            processData.push_back({process_name,app_name, category});
+        }
+        file.close();
+    }
+    return processData;
+}
+
+ProcessData searchProcess(const vector<ProcessData>& processData, const string& process_name) {
+    for (const auto& process : processData) {
+        if (process.process_name == process_name) {
+            return process;
+        }
+    }
+    return {"", "", ""};
+}

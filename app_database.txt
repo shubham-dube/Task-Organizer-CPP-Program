@@ -41,3 +41,16 @@ cpptools-srv.exe: Visual Studio C++ Server, Development Tool
 conhost.exe: Console Window Host, System Process 
 chrome.exe: Google Chrome, Web Browser 
 powershell.exe: Windows PowerShell, Scripting Tool
+opera.exe: Opera Browser GX, Web Browser 
+dart.exe: Flutter Development, Development Tool 
+cmd.exe: Command Prompt, Development Tool 
+node.exe: NodeJs, Development Tool 
+CorelDRW.exe: CorelDRAW, Graphic Design 
+CCLibrary.exe: Adobe Creative Cloud, Graphic Design 
+adb.exe: Android Development SDK, Development Tool 
+PhotoShop.exe: Adobe PhotoShop, Graphic Design 
+WINWORD.EXE: Microsoft Word, Office Softwares 
+EXCEL.EXE: Microsoft Excel, Office Softwares 
+olk.exe: Microsoft Outlook, Office Softwares 
+POWERPNT.EXE: Microsoft PowerPoint, Office Softwares 
+WhatsApp.exe: Whatsapp, Chatting Application 
