@@ -3,11 +3,12 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#define MAX_LOADSTRING 100
+#define MAX_LOADSTRING 1000
 
 class ProcessInfo
 {
 public:
+    ProcessInfo() {}
     ProcessInfo(DWORD pid, const std::wstring& title)
         : pid_(pid), title_(title) {}
 
@@ -22,66 +23,91 @@ protected:
 class WindowEnumerator : public ProcessInfo
 {
 public:
-    std::vector<WindowEnumerator> enumerateWindows()
+    WindowEnumerator() {}
+
+    static std::vector<WindowEnumerator> enumerateWindows()
     {
         std::vector<WindowEnumerator> processes;
 
-        EnumWindows(HWND hwnd, LPARAM lParam) 
-        { 
-            DWORD pid;
-            GetWindowThreadProcessId(hwnd, &pid);
-
-            // Retrieve the title of the window
-            WCHAR szWindowText[MAX_LOADSTRING];
-            GetWindowText(hwnd, szWindowText, MAX_LOADSTRING);
-
-            // Add the process to the list of running processes
-            // if it has not been added already.
-            if (pid != 0 && !szWindowText[0])
-            {
-                processes.push_back(*this);
-            }
-
-            return TRUE;
-            }, NULL);
+        EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&processes));
 
         return processes;
+    }
+
+    static BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
+    {
+        std::vector<WindowEnumerator>* processes = reinterpret_cast<std::vector<WindowEnumerator>*>(lParam);
+
+        DWORD pid;
+        GetWindowThreadProcessId(hwnd, &pid);
+
+        WCHAR szWindowText[MAX_LOADSTRING];
+        int length = GetWindowText(hwnd, szWindowText, MAX_LOADSTRING);
+        if (length > 0)
+        {
+            std::wstring title(szWindowText, length);
+            processes->emplace_back(pid, title);
+        }
+
+        return TRUE;
     }
 };
 
 class ProcessEnumerator : public ProcessInfo
 {
 public:
-    std::vector<ProcessEnumerator> enumerateProcesses()
+    std::vector<ProcessInfo> enumerateProcesses()
     {
-        std::vector<ProcessEnumerator> processes;
-
+        std::vector<DWORD> processIds;
         DWORD cbNeeded;
         if (EnumProcesses(NULL, 0, &cbNeeded) == 0)
         {
-            return processes;
+            return {};
         }
 
-        processes.resize(cbNeeded / sizeof(DWORD));
-        if (EnumProcesses(processes.data(), cbNeeded, &cbNeeded) == 0)
+        processIds.resize(cbNeeded / sizeof(DWORD));
+        if (EnumProcesses(processIds.data(), cbNeeded, &cbNeeded) == 0)
         {
-            return processes;
+            return {};
         }
 
-        // Filter out processes that do not have a top-level window
-        processes.erase(std::remove_if(processes.begin(), processes.end(), [](const ProcessEnumerator& processInfo)
+        std::vector<ProcessInfo> processes;
+        for (DWORD pid : processIds)
         {
-            return processInfo.title().empty();
-        }), processes.end());
+            std::wstring title;
+            if (getProcessTitle(pid, title))
+            {
+                processes.emplace_back(pid, title);
+            }
+        }
 
-        // Sort processes by title
-        std::sort(processes.begin(), processes.end(), [](const ProcessEnumerator& a, const ProcessEnumerator& b)
+        std::sort(processes.begin(), processes.end(), [](const ProcessInfo& a, const ProcessInfo& b)
         {
             return a.title() < b.title();
         });
 
         return processes;
     }
+
+protected:
+bool ProcessEnumerator::getProcessTitle(DWORD pid, std::wstring& title)
+{
+    HWND hwnd = OpenProcess(pid,0,GetCurrent(pid));
+    if (hwnd == NULL)
+    {
+        return false;
+    }
+
+    WCHAR windowText[MAX_LOADSTRING];
+    if (GetWindowText(hwnd, windowText, MAX_LOADSTRING) == 0)
+    {
+        return false;
+    }
+
+    title = windowText;
+    return true;
+} 
+
 };
 
 int main()
