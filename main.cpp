@@ -7,8 +7,9 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-static int i = 0;
+#include <iomanip>
 using namespace std;
+int count = 1;
 
 class ProcessData {
     public:
@@ -45,7 +46,6 @@ public:
     const string& category, const string &name){
         new_process(process_id, process_name, category);
         this->name = name;
-        cout << "Application Created -> " << ++i << endl;
     }
 
     const string get_name() const { return name; }
@@ -54,50 +54,132 @@ private:
     string name;
 };
 
+class Category {
+    public:
+        Category(){}
+        void add_app(const Application &app){
+            apps.push_back(app);
+        }
+        vector<Application> get_app() { return apps; }
+        string category;
+
+    private:
+        vector<Application> apps;
+};
+
 string get_process_name(DWORD process_id);
-BOOL get_all_processes(vector<Application> &all_apps, DWORD &size);
+BOOL get_all_processes(vector<Application> &all_apps, DWORD &size, vector<ProcessData> processData);
+void print_categories(vector<Category> &category_apps);
 
 int main() {
     vector<ProcessData> processData = readProcessDataFromFile("app_database.txt");
-    vector<DWORD> process_info;
-    DWORD process_id[500];
-    DWORD returned_bytes;
-
-    BOOL result = EnumProcesses(process_id, sizeof(process_id), &returned_bytes);
-
-    DWORD real_size = returned_bytes/sizeof(DWORD);
-    vector<Application> app;
-
-    if(result){
-        cout << "No. Of Processes: " << real_size << endl;
-        for(int i=0;i<real_size;i++){
-            string process_name = get_process_name(process_id[i]);
-            ProcessData P = searchProcess(processData, process_name);
-            Application A;
-            A.new_app(process_id[i], process_name, P.category, P.app_name);
-            app.push_back(A);
-        }
-    }
+    vector<Application> all_apps;
 
     while(1) {
-        system("cls");
-        DWORD temp = 0;
-        BOOL resTemp = EnumProcesses(process_id, sizeof(process_id), &temp);
-        if(temp/sizeof(DWORD) != real_size){
-            for(int i=0;i<temp/sizeof(DWORD);i++){
-                cout << process_id[i] << " : " << app[i].get_process_name() << endl;
-            }
-            real_size = temp/sizeof(DWORD);
+        static DWORD size=0;
+        DWORD new_size;
+        BOOL result = get_all_processes(all_apps, new_size, processData);
+        // vector<Category> C;
+        // Category temp; temp.category = " Office Softwares ";
+        // C.emplace_back(temp);
+        // temp.category = " Development Tool ";
+        // C.emplace_back(temp);
+        // temp.category = " Web Browser ";
+        // C.emplace_back(temp);
+        // temp.category = " Graphic Design ";
+        // C.emplace_back(temp);
+        // temp.category = " System Process ";
+        // C.emplace_back(temp);
+        // temp.category = " Others ";
+        // C.emplace_back(temp);
+        // for(int i=0;i<new_size;i++){
+        //     if(all_apps[i].get_category() == " Office Softwares "){
+        //         C[0].add_app(all_apps[i]);
+        //     }
+        //     else if(all_apps[i].get_category() == " Development Tool "){
+        //         C[1].add_app(all_apps[i]);
+        //     }
+        //     else if(all_apps[i].get_category() == " Web Browser "){
+        //         C[2].add_app(all_apps[i]);
+        //     }
+        //     else if(all_apps[i].get_category() == " Graphic Design "){
+        //         C[3].add_app(all_apps[i]);
+        //     }
+        //     else if(all_apps[i].get_category() == " System Process "){
+        //         C[4].add_app(all_apps[i]);
+        //     }
+        //     else{
+        //         C[5].add_app(all_apps[i]);
+        //     }
+        // }
+
+        if(size != new_size){
+            // for(int i=0;i<new_size;i++){
+            //     cout << all_apps[i].get_process_id() << " : " << all_apps[i].get_process_name() << endl;
+            // }
+            print_categories(C);
+            cout << "Size : " << all_apps.size() << endl;
+            size = new_size;
         }
-        cout << "Size: "<<temp/sizeof(DWORD) << "  "<< sizeof(process_id) << endl;
-        Sleep(10000);
+        C.clear();
+        all_apps.clear();
+        Sleep(1000);
     }
 
     return 0;
 }
 
-BOOL get_all_processes(vector<Application> &all_apps, DWORD &size){
-    
+void print_categories(vector<Category> &category_apps){
+    const int COL_WIDTH = 33;
+    int shubham = 1;
+
+    for(int i=0;i<category_apps.size();i=i+2){
+
+       cout << " |                    Category :- " << left << setw(47) << category_apps[i].category
+            << "|    |                    Category :- " << left << setw(47) << category_apps[i+1].category
+            << "\n | " << left << setw(5) << "S no."
+            << " | " << left << setw(COL_WIDTH) << "Process"
+            << " | " << left << setw(COL_WIDTH) << "App Name"
+
+            <<  " |    |" << left << setw(5) << " S no."
+            << " | " << left << setw(30) << "Process"
+            << " | " << left << setw(30) << "App Name                       |"
+            << "\n";
+
+        for(int j=0;j<category_apps[i].get_app().size();j++){
+           cout << "\n | " << left << setw(5) << shubham
+                << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_process_name()
+                << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_name()
+
+                <<  " |    |" << left << setw(5) << shubham
+                << " | " << left << setw(30) << category_apps[i+1].get_app()[j].get_process_name()
+                << " | " << left << setw(30) << category_apps[i+1].get_app()[j].get_name()
+                << "\n";
+        }
+        cout << " ------------------------------------------------------------------------"
+                << "----------------------------------------------------------------------------------------------------------\n\n\n";
+    }
+
+    // cout << "\n|---------------------------------------------------------------------------------------------|";
+
+}
+
+BOOL get_all_processes(vector<Application> &all_apps, DWORD &size, vector<ProcessData> processData){
+    DWORD process_id[1000];
+    DWORD returned_bytes;
+    BOOL result = EnumProcesses(process_id, sizeof(process_id), &returned_bytes);
+    size = returned_bytes/sizeof(DWORD);
+
+    if(result){
+        for(int i=0;i<int(size);i++){
+            string process_name = get_process_name(process_id[i]);
+            ProcessData P = searchProcess(processData, process_name);
+            Application A;
+            A.new_app(process_id[i], process_name, P.category, P.app_name);
+            all_apps.push_back(A);
+        }
+    }
+    return result;
 }
 
 string get_process_name(DWORD process_id){
