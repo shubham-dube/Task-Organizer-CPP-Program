@@ -92,14 +92,14 @@ public:
 protected:
 bool ProcessEnumerator::getProcessTitle(DWORD pid, std::wstring& title)
 {
-    HWND hwnd = OpenProcess(pid,0,GetCurrent(pid));
-    if (hwnd == NULL)
+    HANDLE h_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,0,pid);
+    if (h_process == NULL)
     {
         return false;
     }
-
+    // BOOL result = EnumProcesses(process_id, sizeof(process_id), &returned_bytes);
     WCHAR windowText[MAX_LOADSTRING];
-    if (GetWindowText(hwnd, windowText, MAX_LOADSTRING) == 0)
+    if (GetWindowText(h_process, windowText, MAX_LOADSTRING) == 0)
     {
         return false;
     }
