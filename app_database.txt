@@ -36,7 +36,7 @@ Spotify.exe: Spotify, Music Player
 DllHost.exe: DLL Host, System Process 
 LockApp.exe: Lock Screen App, System Process 
 RuntimeBroker.exe: Runtime Broker, System Process 
-webwallpaper32.exe: (Unknown), (Unknown) 
+webwallpaper32.exe: Wallpaper Engine, Graphic Design 
 cpptools-srv.exe: Visual Studio C++ Server, Development Tool 
 conhost.exe: Console Window Host, System Process 
 chrome.exe: Google Chrome, Web Browser 
@@ -54,3 +54,4 @@ EXCEL.EXE: Microsoft Excel, Office Softwares
 olk.exe: Microsoft Outlook, Office Softwares 
 POWERPNT.EXE: Microsoft PowerPoint, Office Softwares 
 WhatsApp.exe: Whatsapp, Chatting Application 
+msedge.exe: Microsoft Edge, Web Browser 
