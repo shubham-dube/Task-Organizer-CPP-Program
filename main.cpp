@@ -79,39 +79,39 @@ int main() {
         static DWORD size=0;
         DWORD new_size;
         BOOL result = get_all_processes(all_apps, new_size, processData);
-        // vector<Category> C;
-        // Category temp; temp.category = " Office Softwares ";
-        // C.emplace_back(temp);
-        // temp.category = " Development Tool ";
-        // C.emplace_back(temp);
-        // temp.category = " Web Browser ";
-        // C.emplace_back(temp);
-        // temp.category = " Graphic Design ";
-        // C.emplace_back(temp);
-        // temp.category = " System Process ";
-        // C.emplace_back(temp);
-        // temp.category = " Others ";
-        // C.emplace_back(temp);
-        // for(int i=0;i<new_size;i++){
-        //     if(all_apps[i].get_category() == " Office Softwares "){
-        //         C[0].add_app(all_apps[i]);
-        //     }
-        //     else if(all_apps[i].get_category() == " Development Tool "){
-        //         C[1].add_app(all_apps[i]);
-        //     }
-        //     else if(all_apps[i].get_category() == " Web Browser "){
-        //         C[2].add_app(all_apps[i]);
-        //     }
-        //     else if(all_apps[i].get_category() == " Graphic Design "){
-        //         C[3].add_app(all_apps[i]);
-        //     }
-        //     else if(all_apps[i].get_category() == " System Process "){
-        //         C[4].add_app(all_apps[i]);
-        //     }
-        //     else{
-        //         C[5].add_app(all_apps[i]);
-        //     }
-        // }
+        vector<Category> C;
+        Category temp; temp.category = " Office Softwares ";
+        C.emplace_back(temp);
+        temp.category = " Development Tool ";
+        C.emplace_back(temp);
+        temp.category = " Web Browser ";
+        C.emplace_back(temp);
+        temp.category = " Graphic Design ";
+        C.emplace_back(temp);
+        temp.category = " System Process ";
+        C.emplace_back(temp);
+        temp.category = " Others ";
+        C.emplace_back(temp);
+        for(int i=0;i<new_size;i++){
+            if(all_apps[i].get_category() == " Office Softwares "){
+                C[0].add_app(all_apps[i]);
+            }
+            else if(all_apps[i].get_category() == " Development Tool "){
+                C[1].add_app(all_apps[i]);
+            }
+            else if(all_apps[i].get_category() == " Web Browser "){
+                C[2].add_app(all_apps[i]);
+            }
+            else if(all_apps[i].get_category() == " Graphic Design "){
+                C[3].add_app(all_apps[i]);
+            }
+            else if(all_apps[i].get_category() == " System Process "){
+                C[4].add_app(all_apps[i]);
+            }
+            else{
+                C[5].add_app(all_apps[i]);
+            }
+        }
 
         if(size != new_size){
             // for(int i=0;i<new_size;i++){
@@ -131,32 +131,21 @@ int main() {
 
 void print_categories(vector<Category> &category_apps){
     const int COL_WIDTH = 33;
-    int shubham = 1;
 
-    for(int i=0;i<category_apps.size();i=i+2){
-
+    for(int i=0;i<category_apps.size();i=i+1){
        cout << " |                    Category :- " << left << setw(47) << category_apps[i].category
-            << "|    |                    Category :- " << left << setw(47) << category_apps[i+1].category
+            << "|"
             << "\n | " << left << setw(5) << "S no."
             << " | " << left << setw(COL_WIDTH) << "Process"
             << " | " << left << setw(COL_WIDTH) << "App Name"
-
-            <<  " |    |" << left << setw(5) << " S no."
-            << " | " << left << setw(30) << "Process"
-            << " | " << left << setw(30) << "App Name                       |"
             << "\n";
 
         for(int j=0;j<category_apps[i].get_app().size();j++){
-           cout << "\n | " << left << setw(5) << shubham
+           cout << "\n | " << left << setw(5) << 1
                 << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_process_name()
-                << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_name()
-
-                <<  " |    |" << left << setw(5) << shubham
-                << " | " << left << setw(30) << category_apps[i+1].get_app()[j].get_process_name()
-                << " | " << left << setw(30) << category_apps[i+1].get_app()[j].get_name()
-                << "\n";
+                << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_name();
         }
-        cout << " ------------------------------------------------------------------------"
+        cout << "\n------------------------------------------------------------------------"
                 << "----------------------------------------------------------------------------------------------------------\n\n\n";
     }
 
