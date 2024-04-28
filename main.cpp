@@ -6,8 +6,101 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-
+#include <tlhelp32.h>
 using namespace std;
+
+class CpuUsage {
+private:
+    ULARGE_INTEGER _prevSysKernel;
+    ULARGE_INTEGER _prevSysUser;
+    ULARGE_INTEGER _prevProcKernel;
+    ULARGE_INTEGER _prevProcUser;
+    ULARGE_INTEGER _procTotal;
+    ULARGE_INTEGER _sysTotal;
+    double _cpuUsage;
+    std::string _processName;
+
+public:
+    CpuUsage(const std::string& processName) : _processName(processName) {
+        ZeroMemory(&_prevSysKernel, sizeof(LARGE_INTEGER));
+        ZeroMemory(&_prevSysUser, sizeof(LARGE_INTEGER));
+        ZeroMemory(&_prevProcKernel, sizeof(LARGE_INTEGER));
+        ZeroMemory(&_prevProcUser, sizeof(LARGE_INTEGER));
+        _cpuUsage = 0.0;
+    }
+    CpuUsage(){}
+
+    void setProcessName(const std::string& processName)  {
+        _processName = processName;
+        ZeroMemory(&_prevSysKernel, sizeof(LARGE_INTEGER));
+        ZeroMemory(&_prevSysUser, sizeof(LARGE_INTEGER));
+        ZeroMemory(&_prevProcKernel, sizeof(LARGE_INTEGER));
+        ZeroMemory(&_prevProcUser, sizeof(LARGE_INTEGER));
+        _cpuUsage = 0.0;
+    }
+
+    double getCpuUsage() {
+        FILETIME creationTime, exitTime, kernelTime, userTime;
+        GetProcessTimes(_getProcessByName(_processName), &creationTime, &exitTime, &kernelTime, &userTime);
+
+        ULARGE_INTEGER kernel, user;
+        kernel.LowPart = kernelTime.dwLowDateTime;
+        kernel.HighPart = kernelTime.dwHighDateTime;
+        user.LowPart = userTime.dwLowDateTime;
+        user.HighPart = userTime.dwHighDateTime;
+
+        _procTotal.QuadPart = user.QuadPart + kernel.QuadPart;
+
+        FILETIME sysKernel, sysUser, sysIdle;
+        GetSystemTimes(&sysIdle, &sysKernel, &sysUser);
+
+        ULARGE_INTEGER sysKernelLarge, sysUserLarge, sysIdleLarge;
+        sysKernelLarge.LowPart = sysKernel.dwLowDateTime;
+        sysKernelLarge.HighPart = sysKernel.dwHighDateTime;
+        sysUserLarge.LowPart = sysUser.dwLowDateTime;
+        sysUserLarge.HighPart = sysUser.dwHighDateTime;
+        sysIdleLarge.LowPart = sysIdle.dwLowDateTime;
+        sysIdleLarge.HighPart = sysIdle.dwHighDateTime;
+
+        _sysTotal.QuadPart = sysKernelLarge.QuadPart + sysUserLarge.QuadPart;
+
+        double cpuUsage = static_cast<double>(_procTotal.QuadPart - _prevProcKernel.QuadPart - _prevProcUser.QuadPart) /
+                          static_cast<double>(_sysTotal.QuadPart - _prevSysKernel.QuadPart - _prevSysUser.QuadPart);
+
+        _prevProcKernel = kernel;
+        _prevProcUser = user;
+        _prevSysKernel = sysKernelLarge;
+        _prevSysUser = sysUserLarge;
+
+        return cpuUsage * 100.0;
+    }
+
+private:
+    HANDLE _getProcessByName(const std::string& processName) {
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (hSnapshot == INVALID_HANDLE_VALUE) {
+            return NULL;
+        }
+
+        PROCESSENTRY32 processEntry;
+        processEntry.dwSize = sizeof(PROCESSENTRY32);
+
+        if (!Process32First(hSnapshot, &processEntry)) {
+            CloseHandle(hSnapshot);
+            return NULL;
+        }
+
+        do {
+            if (std::string(processEntry.szExeFile) == processName) {
+                CloseHandle(hSnapshot);
+                return OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processEntry.th32ProcessID);
+            }
+        } while (Process32Next(hSnapshot, &processEntry));
+
+        CloseHandle(hSnapshot);
+        return NULL;
+    }
+};
 
 class ProcessData {
     public:
@@ -47,9 +140,12 @@ public:
     }
 
     const string get_name() const { return name; }
+    const SIZE_T get_memory_usage() const { return memory_usage;}
 
 private:
     string name;
+    SIZE_T memory_usage;
+    
 };
 
 class Category {
@@ -172,11 +268,14 @@ void print_categories(vector<Category> &category_apps, int kk){
             << "|"
             << "\n | " << left << setw(5) << "S no."
             << " | " << left << setw(COL_WIDTH) << "Process"
+            << " | " << left << setw(COL_WIDTH) << "CPU Usage"
             << " | " << left << setw(COL_WIDTH) << "App Name" << " |\n";
         cout << " |-------------------------------------------------------------------------------|";
         for(int j=0;j<int(category_apps[i].get_app().size());j++){
+            CpuUsage cpu_usage(category_apps[i].get_app()[j].get_process_name());
            cout << "\n | " << left << setw(5) << kk++
                 << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_process_name()
+                << " | " << left << setw(COL_WIDTH) << cpu_usage.getCpuUsage()
                 << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_name() << " |";
         }
         cout << "\n |-------------------------------------------------------------------------------|\n\n";
