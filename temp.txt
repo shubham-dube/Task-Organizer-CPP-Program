@@ -1,1 +1,5 @@
-HELLO! This is only temporary. To be changed - N.Anand
+CPU Usage
+Memory Usage
+user options - 1.Terminate Tasks
+               2.Open Tasks
+               2.
