@@ -161,6 +161,7 @@ class Category {
         vector<Application> apps;
 };
 
+double get_memory_usage(DWORD process_id);
 string get_process_name(DWORD process_id);
 BOOL get_all_processes(vector<Application> &all_apps, DWORD &size, vector<ProcessData> processData);
 void print_categories(vector<Category> &category_apps, int kk);
@@ -232,6 +233,22 @@ string get_process_name(DWORD process_id){
     }
 }
 
+double get_memory_usage(DWORD process_id){
+    HANDLE h_process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
+
+    if(h_process == NULL){
+        return 0.0;
+    }
+    PROCESS_MEMORY_COUNTERS memory_values;
+    BOOL result = GetProcessMemoryInfo(h_process, &memory_values, sizeof(memory_values));
+    if(result == FALSE){
+        CloseHandle(h_process);
+        return 0.0;
+    }
+    CloseHandle(h_process);
+    return (double)memory_values.WorkingSetSize / 1024.0;
+}
+
 vector<ProcessData> readProcessDataFromFile(const string& filename) {
     ifstream file(filename);
     vector<ProcessData> processData;
@@ -268,14 +285,14 @@ void print_categories(vector<Category> &category_apps, int kk){
             << "|"
             << "\n | " << left << setw(5) << "S no."
             << " | " << left << setw(COL_WIDTH) << "Process"
-            << " | " << left << setw(COL_WIDTH) << "CPU Usage"
+            << " | " << left << setw(COL_WIDTH) << "Memory Usage"
             << " | " << left << setw(COL_WIDTH) << "App Name" << " |\n";
         cout << " |-------------------------------------------------------------------------------|";
         for(int j=0;j<int(category_apps[i].get_app().size());j++){
             CpuUsage cpu_usage(category_apps[i].get_app()[j].get_process_name());
            cout << "\n | " << left << setw(5) << kk++
                 << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_process_name()
-                << " | " << left << setw(COL_WIDTH) << cpu_usage.getCpuUsage()
+                << " | " << left << setw(COL_WIDTH) << get_memory_usage(category_apps[i].get_app()[j].get_process_id())
                 << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_name() << " |";
         }
         cout << "\n |-------------------------------------------------------------------------------|\n\n";
