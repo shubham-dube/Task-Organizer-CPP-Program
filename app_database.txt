@@ -36,7 +36,7 @@ Spotify.exe: Spotify, Music Player
 DllHost.exe: DLL Host, System Process 
 LockApp.exe: Lock Screen App, System Process 
 RuntimeBroker.exe: Runtime Broker, System Process 
-webwallpaper32.exe: Wallpaper Engine, Graphic Design 
+webwallpaper32.exe: Wallpaper Engine, Graphic Softwares 
 cpptools-srv.exe: Visual Studio C++ Server, Development Tool 
 conhost.exe: Console Window Host, System Process 
 chrome.exe: Google Chrome, Web Browser 
@@ -45,10 +45,10 @@ opera.exe: Opera Browser GX, Web Browser
 dart.exe: Flutter Development, Development Tool 
 cmd.exe: Command Prompt, Development Tool 
 node.exe: NodeJs, Development Tool 
-CorelDRW.exe: CorelDRAW, Graphic Design 
-CCLibrary.exe: Adobe Creative Cloud, Graphic Design 
+CorelDRW.exe: CorelDRAW, Graphic Softwares 
+CCLibrary.exe: Adobe Creative Cloud, Graphic Softwares 
 adb.exe: Android Development SDK, Development Tool 
-PhotoShop.exe: Adobe PhotoShop, Graphic Design 
+PhotoShop.exe: Adobe PhotoShop, Graphic Softwares 
 WINWORD.EXE: Microsoft Word, Office Softwares 
 EXCEL.EXE: Microsoft Excel, Office Softwares 
 olk.exe: Microsoft Outlook, Office Softwares 

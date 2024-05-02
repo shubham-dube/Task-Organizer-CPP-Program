@@ -47,26 +47,13 @@ public:
     }
 
     const string get_name() const { return name; }
-    const SIZE_T get_memory_usage() const { return memory_usage;}
+    const int get_memory_usage() const { return memory_usage;}
+    int memory_usage = 0;
+    double cpu_usage = 0.0;
 
 private:
     string name;
-    SIZE_T memory_usage;
-    SIZE_T cpu_usage;
 };
-
-// class Category {
-//     public:
-//         Category(){}
-//         void add_app(const Application &app){
-//             apps.push_back(app);
-//         }
-//         vector<Application> get_app() { return apps; }
-//         string category;
-
-//     private:
-//         vector<Application> apps;
-// };
 
 vector<ProcessData> readProcessDataFromFile(const string& filename);
 ProcessData searchProcess(const vector<ProcessData>& processData, const string& process_name);
@@ -74,8 +61,8 @@ double get_memory_usage(DWORD process_id);
 string get_process_name(DWORD process_id);
 BOOL get_all_processes(vector<Application> &all_apps, DWORD &size, vector<ProcessData> processData);
 void print_categories(map<string,vector<Application>> &category_apps, int kk);
-void add_in_categories(map<string,vector<Application>> &category_apps, vector<Application> all_apps );
-BOOL export_processes(string key);
+void add_in_categories(map<string,vector<Application>> &category_apps, vector<Application> &all_apps );
+BOOL export_processes(map<string,vector<Application>> &category_apps, int kk, ofstream &outfile);
 double getCpuUsage(DWORD pId);
 
 
@@ -86,9 +73,9 @@ int main() {
     int x;
 
     while(1){
-        cout << "1. See live Processes (Category-wise)" << endl;
-        cout << "2. See All Process" << endl;
-        cout << "3. Export Process Running Data (Category-wise)" << endl;
+        cout << "1. See live Processes (Category-wise)\n"
+                  << "2. Export Process Running Data (Category-wise)\n"
+                  << "-1. Enter -1 to Exit\n";
         cin >> x;
 
         switch(x){
@@ -115,16 +102,38 @@ int main() {
                     if (_kbhit()) {
                         char key = _getch();
                         if (key == 'q' || key == 'Q') {
-
                             break;
                         }
                     }
                 }
                 break;
 
+            case 2: {
+                DWORD new_size;
+                BOOL result = get_all_processes(all_apps, new_size, processData);
+                if(!result){
+                    cout << "Processes Retrieval Failed" << endl;
+                }
+                map<string,vector<Application>> Cm;
+                add_in_categories(Cm,all_apps);
+                
+                ofstream outfile("output.txt"); 
+                BOOL isWritten = export_processes(Cm, 1, outfile); 
+                outfile.close();
+                all_apps.clear();
+                if(isWritten) cout << "Processes exported successfully" << endl;
+                else cout << "Processes export failed" << endl;
+                break;
+            }
+
+            case -1:
+                cout << "Exiting...\n";
+                return 0;
+
+            default:
+                cout << "Invalid option. Try again.\n";
+                break;
         }
-
-
     }
 
     return 0;
@@ -215,7 +224,7 @@ double get_memory_usage(DWORD process_id){
         return 0.0;
     }
     CloseHandle(h_process);
-    return (double)memory_values.WorkingSetSize / 1024.0;
+    return (int)memory_values.WorkingSetSize / 1024;
 }
 
 vector<ProcessData> readProcessDataFromFile(const string& filename) {
@@ -245,111 +254,106 @@ ProcessData searchProcess(const vector<ProcessData>& processData, const string& 
     return {"", "", ""};
 }
 
-void print_categories(vector<Category> &category_apps, int kk){
+void print_categories(map<string,vector<Application>> &category_apps, int kk){
     const int COL_WIDTH = 33;
 
-    for(int i=0;i<int(category_apps.size());i=i+1){
+    for(auto i=category_apps.begin();i!=category_apps.end();i++){
+        vector<Application> apps = i->second;
         cout << "\r |-------------------------------------------------------------------------------|\n";
-       cout << " |                    Category :- " << left << setw(47) << category_apps[i].category
+       cout << " |                    Category :- " << left << setw(47) << i->first
             << "|"
             << "\n | " << left << setw(5) << "S no."
             << " | " << left << setw(COL_WIDTH) << "Process"
+            << " | " << left << setw(COL_WIDTH) << "App Name"
             << " | " << left << setw(COL_WIDTH) << "CPU Usage"
-            << " | " << left << setw(COL_WIDTH) << "Memory Usage"
-            << " | " << left << setw(COL_WIDTH) << "App Name" << " |\n";
+            << " | " << left << setw(COL_WIDTH) << "Memory Usage" << " |\n";
         cout << " |-------------------------------------------------------------------------------|";
-        for(int j=0;j<int(category_apps[i].get_app().size());j++){
+        for(int j=0;j<apps.size();j++){
            cout << "\n | " << left << setw(5) << kk++
-                << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_process_name()
-                << " | " << left << setw(COL_WIDTH) << getCpuUsage(category_apps[i].get_app()[j].get_process_id())
-                << " | " << left << setw(COL_WIDTH) << get_memory_usage(category_apps[i].get_app()[j].get_process_id())/1024
-                << " | " << left << setw(COL_WIDTH) << category_apps[i].get_app()[j].get_name() << " |";
+                << " | " << left << setw(COL_WIDTH) << apps[j].get_process_name()
+                << " | " << left << setw(COL_WIDTH) << apps[j].get_name()
+                << " | " << left << setw(COL_WIDTH) << apps[j].cpu_usage
+                << " | " << left << setw(COL_WIDTH) << apps[j].memory_usage << " |";
         }
         cout << "\n |-------------------------------------------------------------------------------|\n\n";
-        // cout << " O------------------------------------------------------------------------"
-        //         << "----------------------------------O\n\n";
     }
 }
 
-BOOL export_processes(map<string,vector<Application>> &category_apps, string key){
-    if(key == "excel"){
+BOOL export_processes(map<string,vector<Application>> &category_apps, int kk, ofstream &outfile){
+    const int COL_WIDTH = 33;
 
+    for(auto i=category_apps.begin();i!=category_apps.end();i++){
+        vector<Application> apps = i->second;
+        outfile << "\r |-------------------------------------------------------------------------------|\n";
+        outfile << " |                    Category :- " << left << setw(47) << i->first
+                << "|"
+                << "\n | " << left << setw(5) << "S no."
+                << " | " << left << setw(COL_WIDTH) << "Process"
+                << " | " << left << setw(COL_WIDTH) << "App Name"
+                << " | " << left << setw(COL_WIDTH) << "CPU Usage"
+                << " | " << left << setw(COL_WIDTH) << "Memory Usage" << " |\n";
+        outfile << " |-------------------------------------------------------------------------------|";
+        for(int j=0;j<apps.size();j++){
+            outfile << "\n | " << left << setw(5) << kk++
+                    << " | " << left << setw(COL_WIDTH) << apps[j].get_process_name()
+                    << " | " << left << setw(COL_WIDTH) << apps[j].get_name()
+                    << " | " << left << setw(COL_WIDTH) << apps[j].cpu_usage
+                    << " | " << left << setw(COL_WIDTH) << apps[j].memory_usage << " |";
+        }
+        outfile << "\n |-------------------------------------------------------------------------------|\n\n";
     }
-    else if(key == "text"){
-
-    }
+    return true;
 }
 
-BOOL searchPr(map<string,vector<Application>> &C, string &category, string &key){
-
+BOOL searchPr(vector<Application> &A, string key){
+    for(int i=0;i<A.size();i++){
+        if(A[i].get_process_name() == key){
+            A[i].cpu_usage += getCpuUsage(A[i].get_process_id());
+            A[i].memory_usage += get_memory_usage(A[i].get_process_id());
+            return true;
+        }
+    }
+    return false;
 }
 
-void add_in_categories(map<string,vector<Application>> &C, vector<Application> all_apps ){
+void add_in_categories(map<string,vector<Application>> &C, vector<Application> &all_apps ){
 
     for(int i=0;i<int(all_apps.size());i++){
-        
-    }
+        if(all_apps[i].get_category() == " Office Softwares "){
+            if(searchPr(C[" Office Softwares "],all_apps[i].get_process_name())) continue;
+            C[" Office Softwares "].push_back(all_apps[i]);
+            C[" Office Softwares "].back().cpu_usage += getCpuUsage(C[" Office Softwares "].back().get_process_id());
+            C[" Office Softwares "].back().memory_usage += (int)get_memory_usage(C[" Office Softwares "].back().get_process_id());
+        }
+        else if(all_apps[i].get_category() == " Development Tool "){
+            if(searchPr(C[" Development Tool "],all_apps[i].get_process_name())) continue;
+            C[" Development Tool "].push_back(all_apps[i]);            
+            C[" Development Tool "].back().cpu_usage += getCpuUsage(C[" Development Tool "].back().get_process_id());
+            C[" Development Tool "].back().memory_usage += (int)get_memory_usage(C[" Development Tool "].back().get_process_id());
+        }
+        else if(all_apps[i].get_category() == " Web Browser "){
+            if(searchPr(C[" Web Browser "],all_apps[i].get_process_name())) continue;
+            C[" Web Browser "].push_back(all_apps[i]);
+            C[" Web Browser "].back().cpu_usage += getCpuUsage(C[" Web Browser "].back().get_process_id());
+            C[" Web Browser "].back().memory_usage += (int)get_memory_usage(C[" Web Browser "].back().get_process_id());
+        }
+        else if(all_apps[i].get_category() == " Graphic Softwares "){
+            if(searchPr(C[" Graphic Softwares "],all_apps[i].get_process_name())) continue;
+            C[" Graphic Softwares "].push_back(all_apps[i]);
+        }
 
-    // Category temp; temp.category = " Office Softwares ";
-    // C.emplace_back(temp);
-    // temp.category = " Development Tool ";
-    // C.emplace_back(temp);
-    // temp.category = " Web Browser ";
-    // C.emplace_back(temp);
-    // temp.category = " Graphic Design ";
-    // C.emplace_back(temp);
-    // temp.category = " System Process ";
-    // C.emplace_back(temp);
-    // temp.category = " Others ";
-    // C.emplace_back(temp);
-    // for(int i=0;i<int(all_apps.size());i++){
-    //     if(all_apps[i].get_category() == " Office Softwares "){
-    //         if(C[0].get_app().size()==0) {
-    //             C[0].add_app(all_apps[i]);
-    //             continue;
-    //         }
-    //         if(C[0].get_app()[int(C[0].get_app().size())-1].get_process_name() != all_apps[i].get_process_name())
-    //         C[0].add_app(all_apps[i]);
-    //     }
-    //     else if(all_apps[i].get_category() == " Development Tool "){
-    //        if(C[1].get_app().size()==0) {
-    //             C[1].add_app(all_apps[i]);
-    //             continue;
-    //         }
-    //         if(C[1].get_app()[int(C[1].get_app().size())-1].get_process_name() != all_apps[i].get_process_name())
-    //         C[1].add_app(all_apps[i]);
-    //     }
-    //     else if(all_apps[i].get_category() == " Web Browser "){
-    //         if(C[2].get_app().size()==0) {
-    //             C[2].add_app(all_apps[i]);
-    //             continue;
-    //         }
-    //         if(C[2].get_app()[int(C[2].get_app().size())-1].get_process_name() != all_apps[i].get_process_name())
-    //         C[2].add_app(all_apps[i]);
-    //     }
-    //     else if(all_apps[i].get_category() == " Graphic Design "){
-    //         if(C[3].get_app().size()==0) {
-    //             C[3].add_app(all_apps[i]);
-    //             continue;
-    //         }
-    //         if(C[3].get_app()[int(C[3].get_app().size())-1].get_process_name() != all_apps[i].get_process_name())
-    //         C[3].add_app(all_apps[i]);
-    //     }
-    //     else if(all_apps[i].get_category() == " System Process "){
-    //         if(C[4].get_app().size()==0) {
-    //             C[4].add_app(all_apps[i]);
-    //             continue;
-    //         }
-    //         if(C[4].get_app()[int(C[4].get_app().size())-1].get_process_name() != all_apps[i].get_process_name())
-    //         C[4].add_app(all_apps[i]);
-    //     }
-    //     else{
-    //         if(C[5].get_app().size()==0) {
-    //             C[5].add_app(all_apps[i]);
-    //             continue;
-    //         }
-    //         if(C[5].get_app()[int(C[5].get_app().size())-1].get_process_name() != all_apps[i].get_process_name())
-    //         C[5].add_app(all_apps[i]);
-    //     }
-    // }
+        else if(all_apps[i].get_category() == " System Process "){
+            if(searchPr(C[" System Process "],all_apps[i].get_process_name())) continue;
+            C[" System Process "].push_back(all_apps[i]);
+            C[" System Process "].back().cpu_usage += getCpuUsage(C[" System Process "].back().get_process_id());
+            C[" System Process "].back().memory_usage += (int)get_memory_usage(C[" System Process "].back().get_process_id());
+        }
+
+        else{
+            if(searchPr(C[" Others "],all_apps[i].get_process_name())) continue;
+            C[" Others "].push_back(all_apps[i]);
+            C[" Others "].back().cpu_usage += getCpuUsage(C[" Others "].back().get_process_id());
+            C[" Others "].back().memory_usage += (int)get_memory_usage(C[" Others "].back().get_process_id());
+        }
+    }
 }
