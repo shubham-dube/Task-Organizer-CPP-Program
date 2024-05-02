@@ -75,7 +75,7 @@ int main() {
     while(1){
         cout << "1. See live Processes (Category-wise)\n"
                   << "2. Export Process Running Data (Category-wise)\n"
-                  << "-1. Enter -1 to Exit\n";
+                  << "3. Enter -1 to Exit\n";
         cin >> x;
 
         switch(x){
@@ -161,7 +161,7 @@ double getCpuUsage(DWORD pId){
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE,pId);
 
     FILETIME creationTime,exitTime,kernelTime,userTime;
-    ULARGE_INTEGER kernelTimeInt,userTimeInt,totalTimeUsed, totalTimeElapsed;
+    ULARGE_INTEGER kernelTimeInt,userTimeInt,totalTimeUsed;
     BOOL result = GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime);
     if(!result) return -1;
 
@@ -169,7 +169,6 @@ double getCpuUsage(DWORD pId){
     kernelTimeInt.HighPart = kernelTime.dwHighDateTime;
     userTimeInt.LowPart = userTime.dwLowDateTime;
     userTimeInt.HighPart = userTime.dwHighDateTime;
-
 
     FILETIME idleTimeSys,kernelTimeSys,userTimeSys;
     ULARGE_INTEGER idleTimeSysInt,kernelTimeSysInt,userTimeSysInt,totalTimeUsedSys;
@@ -259,7 +258,7 @@ void print_categories(map<string,vector<Application>> &category_apps, int kk){
 
     for(auto i=category_apps.begin();i!=category_apps.end();i++){
         vector<Application> apps = i->second;
-        cout << "\r |-------------------------------------------------------------------------------|\n";
+        cout << "\r |-------------------------------------------------------------------------------------------------------------------------------------------------------|\n";
        cout << " |                    Category :- " << left << setw(47) << i->first
             << "|"
             << "\n | " << left << setw(5) << "S no."
@@ -267,15 +266,15 @@ void print_categories(map<string,vector<Application>> &category_apps, int kk){
             << " | " << left << setw(COL_WIDTH) << "App Name"
             << " | " << left << setw(COL_WIDTH) << "CPU Usage"
             << " | " << left << setw(COL_WIDTH) << "Memory Usage" << " |\n";
-        cout << " |-------------------------------------------------------------------------------|";
-        for(int j=0;j<apps.size();j++){
+        cout << "\r |-------------------------------------------------------------------------------------------------------------------------------------------------------|\n";
+        for(int j=0;j<int(apps.size());j++){
            cout << "\n | " << left << setw(5) << kk++
                 << " | " << left << setw(COL_WIDTH) << apps[j].get_process_name()
                 << " | " << left << setw(COL_WIDTH) << apps[j].get_name()
                 << " | " << left << setw(COL_WIDTH) << apps[j].cpu_usage
                 << " | " << left << setw(COL_WIDTH) << apps[j].memory_usage << " |";
         }
-        cout << "\n |-------------------------------------------------------------------------------|\n\n";
+                cout << "\r |-------------------------------------------------------------------------------------------------------------------------------------------------------|\n";
     }
 }
 
@@ -293,7 +292,7 @@ BOOL export_processes(map<string,vector<Application>> &category_apps, int kk, of
                 << " | " << left << setw(COL_WIDTH) << "CPU Usage"
                 << " | " << left << setw(COL_WIDTH) << "Memory Usage" << " |\n";
         outfile << " |-------------------------------------------------------------------------------|";
-        for(int j=0;j<apps.size();j++){
+        for(int j=0;j<int(apps.size());j++){
             outfile << "\n | " << left << setw(5) << kk++
                     << " | " << left << setw(COL_WIDTH) << apps[j].get_process_name()
                     << " | " << left << setw(COL_WIDTH) << apps[j].get_name()
@@ -306,7 +305,7 @@ BOOL export_processes(map<string,vector<Application>> &category_apps, int kk, of
 }
 
 BOOL searchPr(vector<Application> &A, string key){
-    for(int i=0;i<A.size();i++){
+    for(int i=0;i<int(A.size());i++){
         if(A[i].get_process_name() == key){
             A[i].cpu_usage += getCpuUsage(A[i].get_process_id());
             A[i].memory_usage += get_memory_usage(A[i].get_process_id());
